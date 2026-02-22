@@ -228,20 +228,11 @@ const openSidebar = () => {
 let botText = data.answer || "I'm sorry...";
 let extractedLink = data.downloadUrl || null;
 let extractedFileName = data.fileName || null;
-
-// 🔎 Detect URL inside text if backend didn't send structured data
 const urlMatch = botText.match(/https:\/\/acadgpt-backend\.onrender\.com\/download\/[^\s]+/);
-
-
-
 if (urlMatch) {
   extractedLink = urlMatch[0];
-
-  // Extract filename from URL
   const parts = extractedLink.split("/");
   extractedFileName = decodeURIComponent(parts[parts.length - 1]);
-
-  // Remove URL from visible message
   botText = botText.replace(extractedLink, "").trim();
 }
 
