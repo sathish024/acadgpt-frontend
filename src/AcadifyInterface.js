@@ -222,28 +222,17 @@ const handleSend = async () => {
     if (!response.ok) throw new Error(`Server responded with ${response.status}`);
 
     const data = await response.json();
-
-    let botText = data.answer || "I'm sorry...";
-    let extractedLink = data.downloadUrl || null;
-    let extractedFileName = data.fileName || null;
     
-    // Also check if there's a URL in the text (as fallback)
-    const urlMatch = botText.match(/https:\/\/acadgpt-backend\.onrender\.com\/download\/[^\s]+/);
-    if (urlMatch && !extractedLink) {
-      extractedLink = urlMatch[0];
-      const parts = extractedLink.split("/");
-      extractedFileName = decodeURIComponent(parts[parts.length - 1]);
-      botText = botText.replace(extractedLink, "").trim();
-    }
-
+    // THIS IS THE IMPORTANT PART - Create message directly from response
     const botMessage = {
       type: "bot",
-      text: botText,
+      text: data.answer || "I'm sorry...",
       timestamp: new Date().toISOString(),
       subject: selectedSubject?.name,
       id: Date.now().toString() + Math.random(),
-      fileLink: extractedLink,
-      fileName: extractedFileName
+      // Directly use the data fields - no extra logic needed
+      fileLink: data.downloadUrl || null,
+      fileName: data.fileName || null
     };
 
     setAllChats(prev => prev.map(chat => 
@@ -252,16 +241,11 @@ const handleSend = async () => {
         : chat
     ));
 
-    // Auto-generate flashcards from important points
-    if (data.answer && data.answer.length > 100) {
-      generateFlashcards(data.answer);
-    }
-
   } catch (error) {
     console.error("Chat Error:", error);
     const errorMessage = {
       type: "bot",
-      text: "❌ Network error. Please ensure the backend server is running and try again.",
+      text: "❌ Network error. Please try again.",
       timestamp: new Date().toISOString(),
       isError: true,
     };
@@ -273,9 +257,6 @@ const handleSend = async () => {
     ));
   } finally {
     setTyping(false);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
   }
 };
 
@@ -672,22 +653,23 @@ const handleSend = async () => {
                       <div className="file-attachment-card">
                         <div className="file-details">
                           <span className="file-name-label">📄 {msg.fileName}</span>
-                      <button
-                        className="download-now-btn"
-                        onClick={() => {
-                          const link = document.createElement("a");
-                          link.href = msg.fileLink;
-                          link.setAttribute("download", msg.fileName);
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        }}
-                      >
-                        <FaDownload /> Download
-                      </button>
+                          <button
+                            className="download-now-btn"
+                            onClick={() => {
+                              const link = document.createElement("a");
+                              link.href = msg.fileLink;
+                              link.setAttribute("download", msg.fileName);
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                          >
+                            <FaDownload /> Download
+                          </button>
                         </div>
                       </div>
                     )}
+                    
                       <div className="message-timestamp">
                         {new Date(msg.timestamp).toLocaleTimeString()}
                       </div>
