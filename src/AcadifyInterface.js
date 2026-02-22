@@ -174,111 +174,110 @@ const openSidebar = () => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== indexToRemove));
   };
 
-  const handleSend = async () => {
-    if (message.trim() === "") return;
+const handleSend = async () => {
+  if (message.trim() === "") return;
 
+  const userMessage = {
+    type: "user",
+    text: message,
+    subject: selectedSubject?.name || "General",
+    files: [...selectedFiles],
+    timestamp: new Date().toISOString(),
+  };
 
-    const userMessage = {
-      type: "user",
-      text: message,
+  let chatId = currentChatId;
+  
+  if (!chatId) {
+    const newChat = {
+      id: Date.now().toString(),
+      title: message.substring(0, 30) + (message.length > 30 ? "..." : ""),
+      messages: [userMessage],
+      createdAt: new Date().toISOString(),
       subject: selectedSubject?.name || "General",
-      files: [...selectedFiles],
+    };
+    setAllChats(prev => [newChat, ...prev]);
+    setCurrentChatId(newChat.id);
+    chatId = newChat.id;
+  } else {
+    setAllChats(prev => prev.map(chat => 
+      chat.id === chatId 
+        ? { ...chat, messages: [...chat.messages, userMessage] }
+        : chat
+    ));
+  }
+
+  setMessage("");
+  setTyping(true);
+
+  try {
+    const response = await fetch("https://acadgpt-backend.onrender.com/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        question: userMessage.text, 
+        subject: selectedSubject?.name 
+      }),
+    });
+
+    if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+    const data = await response.json();
+
+    let botText = data.answer || "I'm sorry...";
+    let extractedLink = data.downloadUrl || null;
+    let extractedFileName = data.fileName || null;
+    
+    // Also check if there's a URL in the text (as fallback)
+    const urlMatch = botText.match(/https:\/\/acadgpt-backend\.onrender\.com\/download\/[^\s]+/);
+    if (urlMatch && !extractedLink) {
+      extractedLink = urlMatch[0];
+      const parts = extractedLink.split("/");
+      extractedFileName = decodeURIComponent(parts[parts.length - 1]);
+      botText = botText.replace(extractedLink, "").trim();
+    }
+
+    const botMessage = {
+      type: "bot",
+      text: botText,
       timestamp: new Date().toISOString(),
+      subject: selectedSubject?.name,
+      id: Date.now().toString() + Math.random(),
+      fileLink: extractedLink,
+      fileName: extractedFileName
     };
 
-    let chatId = currentChatId;
+    setAllChats(prev => prev.map(chat => 
+      chat.id === chatId 
+        ? { ...chat, messages: [...chat.messages, botMessage] }
+        : chat
+    ));
+
+    // Auto-generate flashcards from important points
+    if (data.answer && data.answer.length > 100) {
+      generateFlashcards(data.answer);
+    }
+
+  } catch (error) {
+    console.error("Chat Error:", error);
+    const errorMessage = {
+      type: "bot",
+      text: "❌ Network error. Please ensure the backend server is running and try again.",
+      timestamp: new Date().toISOString(),
+      isError: true,
+    };
     
-    if (!chatId) {
-      const newChat = {
-        id: Date.now().toString(),
-        title: message.substring(0, 30) + (message.length > 30 ? "..." : ""),
-        messages: [userMessage],
-        createdAt: new Date().toISOString(),
-        subject: selectedSubject?.name || "General",
-      };
-      setAllChats(prev => [newChat, ...prev]);
-      setCurrentChatId(newChat.id);
-      chatId = newChat.id;
-    } else {
-      setAllChats(prev => prev.map(chat => 
-        chat.id === chatId 
-          ? { ...chat, messages: [...chat.messages, userMessage] }
-          : chat
-      ));
+    setAllChats(prev => prev.map(chat => 
+      chat.id === chatId 
+        ? { ...chat, messages: [...chat.messages, errorMessage] }
+        : chat
+    ));
+  } finally {
+    setTyping(false);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
     }
-
-    setMessage("");
-    setTyping(true);
-
-    try {
-      const response = await fetch("https://acadgpt-backend.onrender.com/ask"
-, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          question: userMessage.text, 
-          subject: selectedSubject?.name 
-        }),
-      });
-
-      if (!response.ok) throw new Error(`Server responded with ${response.status}`);
-
-      const data = await response.json();
-
-let botText = data.answer || "I'm sorry...";
-let extractedLink = data.downloadUrl || null;
-let extractedFileName = data.fileName || null;
-const urlMatch = botText.match(/https:\/\/acadgpt-backend\.onrender\.com\/download\/[^\s]+/);
-if (urlMatch) {
-  extractedLink = urlMatch[0];
-  const parts = extractedLink.split("/");
-  extractedFileName = decodeURIComponent(parts[parts.length - 1]);
-  botText = botText.replace(extractedLink, "").trim();
-}
-
-const botMessage = {
-  type: "bot",
-  text: botText,
-  timestamp: new Date().toISOString(),
-  subject: selectedSubject?.name,
-  id: Date.now().toString() + Math.random(),
-  fileLink: extractedLink,
-  fileName: extractedFileName
+  }
 };
-
-
-      setAllChats(prev => prev.map(chat => 
-        chat.id === chatId 
-          ? { ...chat, messages: [...chat.messages, botMessage] }
-          : chat
-      ));
-
-      // Auto-generate flashcards from important points
-      if (data.answer && data.answer.length > 100) {
-        generateFlashcards(data.answer);
-      }
-
-    } catch (error) {
-      console.error("Chat Error:", error);
-      const errorMessage = {
-        type: "bot",
-        text: "❌ Network error. Please ensure the backend server is running and try again.",
-        timestamp: new Date().toISOString(),
-        isError: true,
-      };
-      
-      setAllChats(prev => prev.map(chat => 
-        chat.id === chatId 
-          ? { ...chat, messages: [...chat.messages, errorMessage] }
-          : chat
-      ));
-    } finally {
-      setTyping(false);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
-    }
-  };
 
   const generateFlashcards = (text) => {
     // Simple flashcard generation from key sentences
