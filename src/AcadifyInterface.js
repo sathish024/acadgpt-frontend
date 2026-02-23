@@ -41,10 +41,10 @@ function AcadifyInterface() {
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizResults, setQuizResults] = useState(null);
   const [lastStudyDate, setLastStudyDate] = useState(null);
-  //const [desktopSidebar, setDesktopSidebar] = useState(true);
+  const [desktopSidebar, setDesktopSidebar] = useState(true);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
-  //const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Control sidebar visibility
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Control sidebar visibility
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false); 
   
   const subjects = [
