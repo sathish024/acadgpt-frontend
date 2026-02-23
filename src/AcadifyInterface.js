@@ -653,16 +653,14 @@ const handleSend = async () => {
                       <div className="file-attachment-card">
                         <div className="file-details">
                           <span className="file-name-label">📄 {msg.fileName}</span>
-                          <button
-                            className="download-now-btn"
-                            onClick={() => {
-                              const backendBase = "https://acadgpt-backend.onrender.com";
-                              const fullUrl = backendBase + msg.fileLink;
-                              window.open(fullUrl, "_blank");
-                            }}
-                          >
-                            <FaDownload /> Download
-                          </button>
+                          <a
+                              href={`https://acadgpt-backend.onrender.com${msg.fileLink}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="download-now-btn"
+                            >
+                              <FaDownload /> Download
+                            </a>
                         </div>
                       </div>
                     )}
