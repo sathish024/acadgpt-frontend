@@ -41,10 +41,10 @@ function AcadifyInterface() {
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizResults, setQuizResults] = useState(null);
   const [lastStudyDate, setLastStudyDate] = useState(null);
-  const [desktopSidebar, setDesktopSidebar] = useState(true);
+  //const [desktopSidebar, setDesktopSidebar] = useState(true);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Control sidebar visibility
+  //const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Control sidebar visibility
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false); 
   
   const subjects = [
@@ -373,18 +373,17 @@ const handleSend = async () => {
 
   return (
 // Update the main container div to include 'sidebar-closed'
-<div className={`container ${darkMode ? "dark" : ""} ${!isSidebarOpen ? 'sidebar-closed' : ''}`}>
+<div className={`container ${darkMode ? "dark" : ""}`}>
       {/* Sidebar - conditionally rendered or hidden with CSS */}
-      <div className={`sidebar ${mobileSidebarOpen ? "open" : ""} ${!isSidebarOpen ? 'hidden' : ''} ${darkMode ? "dark" : ""}`}>
+      <div className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <h3>
             <FaBook className="sidebar-icon" /> My Library
           </h3>
-           <FaTimes 
-            className="close-icon" 
-            onClick={closeSidebar}
-            title="Close sidebar"
-          />
+         <FaTimes 
+  className="close-icon" 
+  onClick={() => setSidebarOpen(false)}
+/>
         </div>
 
         <button className="new-chat-btn" onClick={handleNewChat}>
@@ -450,9 +449,7 @@ const handleSend = async () => {
         {/* Navbar */}
         <div className="navbar">
           <div className="nav-left">
-            {!isSidebarOpen && (
-              <div className="menu-icon" onClick={openSidebar}>☰</div>
-            )}
+           <div className="menu-icon" onClick={() => setSidebarOpen(true)}>☰</div>
             <h1 className="logo">
               <FaGraduationCap className="logo-icon" />
               Acad<span className="highlight">GPT</span>
