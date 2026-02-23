@@ -656,12 +656,9 @@ const handleSend = async () => {
                           <button
                             className="download-now-btn"
                             onClick={() => {
-                              const link = document.createElement("a");
-                              link.href = msg.fileLink;
-                              link.setAttribute("download", msg.fileName);
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
+                              const backendBase = "https://acadgpt-backend.onrender.com";
+                              const fullUrl = backendBase + msg.fileLink;
+                              window.open(fullUrl, "_blank");
                             }}
                           >
                             <FaDownload /> Download
