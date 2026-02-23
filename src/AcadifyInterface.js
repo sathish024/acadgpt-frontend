@@ -373,17 +373,18 @@ const handleSend = async () => {
 
   return (
 // Update the main container div to include 'sidebar-closed'
-<div className={`container ${darkMode ? "dark" : ""}`}>
+<div className={`container ${darkMode ? "dark" : ""} ${!isSidebarOpen ? 'sidebar-closed' : ''}`}>
       {/* Sidebar - conditionally rendered or hidden with CSS */}
-      <div className={`sidebar ${sidebarOpen ? "open" : ""}`}>
+      <div className={`sidebar ${mobileSidebarOpen ? "open" : ""} ${!isSidebarOpen ? 'hidden' : ''} ${darkMode ? "dark" : ""}`}>
         <div className="sidebar-header">
           <h3>
             <FaBook className="sidebar-icon" /> My Library
           </h3>
-         <FaTimes 
-  className="close-icon" 
-  onClick={() => setSidebarOpen(false)}
-/>
+           <FaTimes 
+            className="close-icon" 
+            onClick={closeSidebar}
+            title="Close sidebar"
+          />
         </div>
 
         <button className="new-chat-btn" onClick={handleNewChat}>
@@ -449,7 +450,9 @@ const handleSend = async () => {
         {/* Navbar */}
         <div className="navbar">
           <div className="nav-left">
-           <div className="menu-icon" onClick={() => setSidebarOpen(true)}>☰</div>
+            {!isSidebarOpen && (
+              <div className="menu-icon" onClick={openSidebar}>☰</div>
+            )}
             <h1 className="logo">
               <FaGraduationCap className="logo-icon" />
               Acad<span className="highlight">GPT</span>
