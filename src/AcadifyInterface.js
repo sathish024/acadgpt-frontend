@@ -5,7 +5,7 @@ import {
   FaMicrophone, FaBook, FaBrain, FaChartBar, FaCalendarAlt, FaStickyNote,
   FaGraduationCap, FaFilePdf, FaFileImage, FaFileWord, FaDownload,
   FaRegLightbulb, FaRegClock, FaCheckCircle, FaRegStar, FaStar,
-  FaRegBookmark, FaBookmark, FaShare, FaPrint, FaRegSmile ,FaTrashAlt 
+  FaRegBookmark, FaBookmark, FaShare, FaPrint, FaRegSmile ,FaTrashAlt,FaFolderOpen
 } from "react-icons/fa";
 
 function AcadifyInterface() {
@@ -50,7 +50,26 @@ function AcadifyInterface() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [rightSidebarTab, setRightSidebarTab] = useState("bookmarks");
-  
+  const [storageFiles, setStorageFiles] = useState([]);
+  const [previewFile, setPreviewFile] = useState(null);
+  const storageInputRef = useRef(null);
+  const handleStorageUpload = (e) => {
+  const files = Array.from(e.target.files);
+const formatted = files.map(file => ({
+  id: Date.now() + Math.random(),
+  name: file.name,
+  size: file.size,
+  type: file.type,
+  file,
+  url: URL.createObjectURL(file),
+  uploadedAt: new Date().toISOString()
+}));
+  setStorageFiles(prev => [
+    ...formatted,
+    ...prev
+  ]);
+};
+
   const subjects = [
     { name: "Operating Systems", icon: "🖥️", color: "#3b82f6" },
     { name: "DBMS", icon: "🗄️", color: "#10b981" },
@@ -135,12 +154,16 @@ function AcadifyInterface() {
     const savedNotes = JSON.parse(localStorage.getItem("acadifyNotes"));
     if(savedNotes) setNotes(savedNotes);
 
+    const savedStorage =JSON.parse(localStorage.getItem("acadifyStorage"));
+    if(savedStorage)setStorageFiles(savedStorage);
+
   }, []);
 
   useEffect(() => {
     localStorage.setItem("acadifyChats", JSON.stringify(allChats));
     localStorage.setItem("acadifyBookmarks", JSON.stringify(bookmarkedMessages));
     localStorage.setItem("acadifyNotes", JSON.stringify(notes));
+    localStorage.setItem("acadifyStorage", JSON.stringify(storageFiles));
 
   }, [allChats, bookmarkedMessages, notes, lastStudyDate]);
 
@@ -214,7 +237,7 @@ function AcadifyInterface() {
     setTyping(true);
 
     try {
-      const response = await fetch("https://acadgpt-backend.onrender.com/ask", {
+      const response = await fetch("http://localhost:5000/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -289,7 +312,7 @@ function AcadifyInterface() {
     files.forEach(file => formData.append("book", file));
 
     try {
-      const response = await fetch("https://acadgpt-backend.onrender.com/upload", {
+      const response = await fetch("http://localhost:5000/upload", {
         method: "POST",
         body: formData,
       });
@@ -322,6 +345,9 @@ function AcadifyInterface() {
       size: file.size,
     }));
     setSelectedFiles(prev => [...prev, ...fileData]);
+
+
+    
   };
 
 const toggleBookmark = (message) => {
@@ -474,6 +500,14 @@ const toggleBookmark = (message) => {
             <FaRegBookmark />
           </button>
           <button className="nav-btn" onClick={() => { setRightSidebarOpen(true);setRightSidebarTab("notes"); }}> 📝 </button>
+          <button
+  className="nav-btn"
+  onClick={() => {
+    setRightSidebarOpen(true);
+    setRightSidebarTab("storage");
+}}>
+  <FaFolderOpen />
+</button>
             <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
               {darkMode ? <FaSun /> : <FaMoon />}
             </button>
@@ -540,7 +574,7 @@ const toggleBookmark = (message) => {
                           <div className="file-details">
                             <span className="file-name-label">📄 {msg.fileName}</span>
                             <a
-                              href={`https://acadgpt-backend.onrender.com${msg.fileLink}`}
+                              href={`http://localhost:5000${msg.fileLink}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="download-now-btn"
@@ -592,9 +626,7 @@ const toggleBookmark = (message) => {
 
             <div className="right-sidebar-header">
               <h3>
-                {rightSidebarTab === "bookmarks"
-                  ? "Bookmarks"
-                  : "Notes"}
+                {rightSidebarTab}
               </h3>
 
               <button
@@ -643,6 +675,83 @@ const toggleBookmark = (message) => {
 
             </div>
           )}
+          {rightSidebarTab === "storage" && (
+  <div className="storage-section">
+
+    <button
+      className="storage-upload-btn"
+      onClick={() =>
+        storageInputRef.current.click()
+      }
+    >
+      Upload Files
+    </button>
+
+    <input
+      type="file"
+      multiple
+      hidden
+      ref={storageInputRef}
+      onChange={handleStorageUpload}
+    />
+
+    <div className="storage-list">
+
+      {storageFiles.length === 0 ? (
+        <div className="empty-storage">
+          No files uploaded
+        </div>
+      ) : (
+
+        storageFiles.map(file => (
+
+        <div
+          key={file.id}
+          className="storage-card"
+          onClick={() => setPreviewFile(file)}
+        >
+
+            <div className="storage-card-left">
+
+              <div className="storage-icon">
+                📄
+              </div>
+
+              <div>
+
+                <h4>{file.name}</h4>
+
+                <p>
+                  {(file.size / 1024).toFixed(1)}
+                  KB
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              className="delete-storage-btn"
+              onClick={() =>
+                setStorageFiles(prev =>
+                  prev.filter(
+                    f => f.id !== file.id
+                  )
+                )
+              }
+            >
+              <FaTrashAlt />
+            </button>
+
+          </div>
+
+        ))
+      )}
+
+    </div>
+
+  </div>
+)}
                  {rightSidebarTab === "notes" && (
                     <div className="notes-section">
 
@@ -748,8 +857,78 @@ const toggleBookmark = (message) => {
 
           </div>
         )}
-        </div>
+        {previewFile && (
+  <div className="preview-overlay">
 
+    <div className="preview-modal">
+
+      <div className="preview-header">
+
+        <h3>{previewFile.name}</h3>
+
+        <button
+          onClick={() => setPreviewFile(null)}
+        >
+          <FaTimes />
+        </button>
+
+      </div>
+
+      <div className="preview-body">
+
+        {previewFile.type.startsWith("image") && (
+          <img
+            src={previewFile.url}
+            alt=""
+            className="preview-image"
+          />
+        )}
+
+        {previewFile.type.includes("pdf") && (
+          <iframe
+            src={previewFile.url}
+            title="PDF Preview"
+            className="preview-frame"
+          />
+        )}
+
+        {previewFile.type.startsWith("audio") && (
+          <audio
+            controls
+            src={previewFile.url}
+            style={{ width: "100%" }}
+          />
+        )}
+
+        {!previewFile.type.startsWith("image") &&
+         !previewFile.type.includes("pdf") &&
+         !previewFile.type.startsWith("audio") && (
+
+          <div className="file-preview-placeholder">
+            Preview not available
+          </div>
+
+        )}
+
+      </div>
+
+      <div className="preview-footer">
+
+        <a
+          href={previewFile.url}
+          download={previewFile.name}
+          className="download-btn"
+        >
+          Download File
+        </a>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
+</div>
         {/* Floating Input Area */}
         <div className="input-container">
           {/* Study Timer */}

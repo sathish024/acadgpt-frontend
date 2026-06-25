@@ -10,7 +10,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const handleDemoAccess = () => {
- navigate("/AcadifyInterface"); // or your dashboard route
+  navigate("/AcadifyInterface"); // or your dashboard route
   };
 
   const handleLogin = async (e) => {
